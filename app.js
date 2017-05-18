@@ -3,6 +3,8 @@ import mongo from 'koa-mongo';
 import _ from 'koa-route';
 import moment from 'moment';
 
+import roomService from './control/roomService';
+
 const app = new Koa();
 
 const test = async (ctx) => {
@@ -11,32 +13,17 @@ const test = async (ctx) => {
     ctx.body = result;
 };
 
+const getRoomList = async (ctx) => {
+
+};
+
 const getIndexData = async (ctx) => {
-    const dateList = getNextWeekDate();
-
-};
-
-const getRoomList = async (ctx, date) => {
-    const result = await ctx.mongo.db('meeting').collection('room').find().toArray();
-    for (const room of result) {
-        const roomRecord = await getRoomRecord({
-            ctx,
-            userId: 'Tony段',
-            roomId: room.roomId,
-            date
-        });
-        room.record = roomRecord;
+    const dateList = getNextWeekDate(ctx);
+    const roomList = await roomService.getRoomList(ctx, dateList[0]);
+    ctx.body = {
+        dateList,
+        roomList
     }
-    ctx.body = result;
-};
-
-const getRoomRecord = async ({ ctx, userId, roomId, date }) => {
-    const result = await ctx.mongo.db('meeting').collection('record').find({
-        userId,
-        roomId: roomId.toString(),
-        date
-    }).toArray();
-    return result;
 };
 
 const getRoomDetail = async (ctx) => {
@@ -214,13 +201,13 @@ const cancel = async (ctx) => {
     }
 };
 
-const getNextWeekDate = (ctx) => {
+const getNextWeekDate = () => {
     const days = [];
     for (var i = 0; i < 7; i++) {
         days.push(moment().add(i, 'd').format('YYYY-MM-DD'));
     }
 
-    ctx.body = days;
+    return days;
 };
 
 app.use(mongo({
